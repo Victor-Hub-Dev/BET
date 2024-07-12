@@ -36,28 +36,28 @@ if not st.session_state.logged_in:
     # User Registration
     with st.sidebar:
         st.header("User Registration")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        reg_username = st.text_input("Username", key="reg_username")
+        reg_password = st.text_input("Password", type="password", key="reg_password")
         if st.button("Register"):
-            register_user(username, password)
-            st.success("User registered! Please log in.")
+            register_user(reg_username, reg_password)
+            st.sidebar.success("User registered! Please log in.")
 
     # User Login
     with st.sidebar:
         st.header("User Login")
         login_username = st.text_input("Login Username", key="login_username")
         login_password = st.text_input("Login Password", type="password", key="login_password")
-        if st.button("Login"):
+        if st.button("Login", key="login_button"):
             login_user = next((user for user in data['users'] if user['username'] == login_username and user['password'] == login_password), None)
             if login_user:
                 st.session_state.logged_in = True
                 st.session_state.username = login_username
-                st.success("Logged in as {}".format(login_username))
                 st.experimental_rerun()  # Rerun the app to update the state
             else:
-                st.error("Invalid credentials")
+                st.sidebar.error("Invalid credentials")
 
 if st.session_state.logged_in:
+    st.sidebar.success("Logged in as {}".format(st.session_state.username))
     st.header("Welcome, {}".format(st.session_state.username))
 
     # Add Expense
