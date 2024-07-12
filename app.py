@@ -16,7 +16,7 @@ def register_user(username, password):
     else:
         data['users'].append({'username': username, 'password': password})
         st.success(f"User '{username}' registered successfully")
-    st.write("Current Users:", data['users'])
+    st.write("Current Users after registration:", data['users'])  # Debug statement
 
 # User authentication function
 def authenticate_user(username, password):
