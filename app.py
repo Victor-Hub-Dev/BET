@@ -27,27 +27,38 @@ def get_budgets(username):
 # Streamlit UI
 st.title("Budgeting and Expense Tracking App")
 
-# User Registration
-st.sidebar.header("User Registration")
-username = st.sidebar.text_input("Username")
-password = st.sidebar.text_input("Password", type="password")
-if st.sidebar.button("Register"):
-    register_user(username, password)
-    st.sidebar.success("User registered!")
+# State management to remember the logged-in user
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.username = ''
 
-# User Login
-st.sidebar.header("User Login")
-login_username = st.sidebar.text_input("Login Username")
-login_password = st.sidebar.text_input("Login Password", type="password")
-login_user = next((user for user in data['users'] if user['username'] == login_username and user['password'] == login_password), None)
-if st.sidebar.button("Login"):
-    if login_user:
-        st.sidebar.success("Logged in as {}".format(login_username))
-    else:
-        st.sidebar.error("Invalid credentials")
+if not st.session_state.logged_in:
+    # User Registration
+    with st.sidebar:
+        st.header("User Registration")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Register"):
+            register_user(username, password)
+            st.success("User registered! Please log in.")
 
-if login_user:
-    st.header("Welcome, {}".format(login_username))
+    # User Login
+    with st.sidebar:
+        st.header("User Login")
+        login_username = st.text_input("Login Username", key="login_username")
+        login_password = st.text_input("Login Password", type="password", key="login_password")
+        if st.button("Login"):
+            login_user = next((user for user in data['users'] if user['username'] == login_username and user['password'] == login_password), None)
+            if login_user:
+                st.session_state.logged_in = True
+                st.session_state.username = login_username
+                st.success("Logged in as {}".format(login_username))
+                st.experimental_rerun()  # Rerun the app to update the state
+            else:
+                st.error("Invalid credentials")
+
+if st.session_state.logged_in:
+    st.header("Welcome, {}".format(st.session_state.username))
 
     # Add Expense
     st.subheader("Add Expense")
@@ -55,7 +66,7 @@ if login_user:
     expense_category = st.selectbox("Category", ["Food", "Transport", "Entertainment", "Utilities", "Others"])
     expense_date = st.date_input("Date", datetime.now())
     if st.button("Add Expense"):
-        add_expense(login_username, expense_amount, expense_category, expense_date)
+        add_expense(st.session_state.username, expense_amount, expense_category, expense_date)
         st.success("Expense added!")
 
     # Add Budget
@@ -63,19 +74,19 @@ if login_user:
     budget_category = st.selectbox("Budget Category", ["Food", "Transport", "Entertainment", "Utilities", "Others"])
     budget_amount = st.number_input("Budget Amount", min_value=0.0, key="budget_amount")
     if st.button("Set Budget"):
-        add_budget(login_username, budget_category, budget_amount)
+        add_budget(st.session_state.username, budget_category, budget_amount)
         st.success("Budget set!")
 
     # View Expenses
     st.subheader("View Expenses")
-    expenses = get_expenses(login_username)
+    expenses = get_expenses(st.session_state.username)
     expenses_df = pd.DataFrame(expenses)
     if not expenses_df.empty:
         st.table(expenses_df)
 
     # View Budgets
     st.subheader("View Budgets")
-    budgets = get_budgets(login_username)
+    budgets = get_budgets(st.session_state.username)
     budgets_df = pd.DataFrame(budgets)
     if not budgets_df.empty:
         st.table(budgets_df)
@@ -85,4 +96,3 @@ if login_user:
     if not expenses_df.empty:
         expenses_summary = expenses_df.groupby("category")["amount"].sum().reset_index()
         st.bar_chart(expenses_summary.set_index("category"))
-
