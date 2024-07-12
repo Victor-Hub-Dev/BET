@@ -32,30 +32,33 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ''
 
+# User Registration and Login
 if not st.session_state.logged_in:
     # User Registration
     with st.sidebar:
         st.header("User Registration")
-        reg_username = st.text_input("Username", key="reg_username")
-        reg_password = st.text_input("Password", type="password", key="reg_password")
+        reg_username = st.text_input("Register Username", key="reg_username")
+        reg_password = st.text_input("Register Password", type="password", key="reg_password")
         if st.button("Register"):
             register_user(reg_username, reg_password)
-            st.sidebar.success("User registered! Please log in.")
+            st.success("User registered! Please log in.")
+            st.session_state.username = reg_username  # Automatically fill in the login username
 
     # User Login
     with st.sidebar:
         st.header("User Login")
-        login_username = st.text_input("Login Username", key="login_username")
+        login_username = st.text_input("Login Username", key="login_username", value=st.session_state.username)
         login_password = st.text_input("Login Password", type="password", key="login_password")
-        if st.button("Login", key="login_button"):
+        if st.button("Login"):
             login_user = next((user for user in data['users'] if user['username'] == login_username and user['password'] == login_password), None)
             if login_user:
                 st.session_state.logged_in = True
                 st.session_state.username = login_username
                 st.experimental_rerun()  # Rerun the app to update the state
             else:
-                st.sidebar.error("Invalid credentials")
+                st.error("Invalid credentials")
 
+# Main App Interface
 if st.session_state.logged_in:
     st.sidebar.success("Logged in as {}".format(st.session_state.username))
     st.header("Welcome, {}".format(st.session_state.username))
