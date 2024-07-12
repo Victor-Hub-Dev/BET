@@ -60,7 +60,7 @@ if st.sidebar.button("Login"):
     else:
         st.sidebar.error("Invalid credentials")
 
-# Main App
+# Check if user is logged in
 if 'username' in st.session_state:
     st.header(f"Welcome, {st.session_state.username}")
 
