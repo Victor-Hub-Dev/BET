@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import sqlite3
 from datetime import datetime
 
 # Simulate a database with a dictionary
