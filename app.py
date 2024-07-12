@@ -10,7 +10,24 @@ data = {
 }
 
 def register_user(username, password):
-    data['users'].append({'username': username, 'password': password})
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)', (username, password, is_admin))
+        conn.commit()
+        st.success(f"User '{username}' registered successfully")
+    except sqlite3.IntegrityError:
+        st.error(f"User '{username}' already exists.")
+    conn.close()
+
+# User authentication
+def authenticate_user(username, password):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('SELECT is_admin FROM users WHERE username = ? AND password = ?', (username, password))
+    user = c.fetchone()
+    conn.close()
+    return user
 
 def add_expense(username, amount, category, date):
     data['expenses'].append({'username': username, 'amount': amount, 'category': category, 'date': date})
