@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
 from datetime import datetime
 
 # Simulate a database with a dictionary
@@ -10,76 +9,60 @@ data = {
     'budgets': []
 }
 
+# User registration function
 def register_user(username, password):
-    conn = sqlite3.connect(data)
-    c = conn.cursor()
-    try:
-        c.execute('INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)', (username, password, is_admin))
-        conn.commit()
-        st.success(f"User '{username}' registered successfully")
-    except sqlite3.IntegrityError:
+    if any(user['username'] == username for user in data['users']):
         st.error(f"User '{username}' already exists.")
-    conn.close()
+    else:
+        data['users'].append({'username': username, 'password': password})
+        st.success(f"User '{username}' registered successfully")
 
-# User authentication
+# User authentication function
 def authenticate_user(username, password):
-    conn = sqlite3.connect(data)
-    c = conn.cursor()
-    c.execute('SELECT is_admin FROM users WHERE username = ? AND password = ?', (username, password))
-    user = c.fetchone()
-    conn.close()
+    user = next((user for user in data['users'] if user['username'] == username and user['password'] == password), None)
     return user
 
+# Function to add expense
 def add_expense(username, amount, category, date):
     data['expenses'].append({'username': username, 'amount': amount, 'category': category, 'date': date})
 
+# Function to add budget
 def add_budget(username, category, budget_amount):
     data['budgets'].append({'username': username, 'category': category, 'budget_amount': budget_amount})
 
+# Function to get expenses
 def get_expenses(username):
     return [expense for expense in data['expenses'] if expense['username'] == username]
 
+# Function to get budgets
 def get_budgets(username):
     return [budget for budget in data['budgets'] if budget['username'] == username]
 
 # Streamlit UI
 st.title("Budgeting and Expense Tracking App")
 
-# State management to remember the logged-in user
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.username = ''
+# User Registration
+st.sidebar.header("User Registration")
+reg_username = st.sidebar.text_input("Register Username", key="reg_username")
+reg_password = st.sidebar.text_input("Register Password", type="password", key="reg_password")
+if st.sidebar.button("Register"):
+    register_user(reg_username, reg_password)
 
-# User Registration and Login
-if not st.session_state.logged_in:
-    # User Registration
-    with st.sidebar:
-        st.header("User Registration")
-        reg_username = st.text_input("Register Username", key="reg_username")
-        reg_password = st.text_input("Register Password", type="password", key="reg_password")
-        if st.button("Register"):
-            register_user(reg_username, reg_password)
-            st.success("User registered! Please log in.")
-            st.session_state.username = reg_username  # Automatically fill in the login username
+# User Login
+st.sidebar.header("User Login")
+login_username = st.sidebar.text_input("Login Username", key="login_username")
+login_password = st.sidebar.text_input("Login Password", type="password", key="login_password")
+if st.sidebar.button("Login"):
+    login_user = authenticate_user(login_username, login_password)
+    if login_user:
+        st.session_state.username = login_username
+        st.sidebar.success(f"Logged in as {login_username}")
+    else:
+        st.sidebar.error("Invalid credentials")
 
-    # User Login
-    with st.sidebar:
-        st.header("User Login")
-        login_username = st.text_input("Login Username", key="login_username", value=st.session_state.username)
-        login_password = st.text_input("Login Password", type="password", key="login_password")
-        if st.button("Login"):
-            login_user = next((user for user in data['users'] if user['username'] == login_username and user['password'] == login_password), None)
-            if login_user:
-                st.session_state.logged_in = True
-                st.session_state.username = login_username
-                st.experimental_rerun()  # Rerun the app to update the state
-            else:
-                st.error("Invalid credentials")
-
-# Main App Interface
-if st.session_state.logged_in:
-    st.sidebar.success("Logged in as {}".format(st.session_state.username))
-    st.header("Welcome, {}".format(st.session_state.username))
+# Main App
+if 'username' in st.session_state:
+    st.header(f"Welcome, {st.session_state.username}")
 
     # Add Expense
     st.subheader("Add Expense")
@@ -117,3 +100,5 @@ if st.session_state.logged_in:
     if not expenses_df.empty:
         expenses_summary = expenses_df.groupby("category")["amount"].sum().reset_index()
         st.bar_chart(expenses_summary.set_index("category"))
+else:
+    st.header("Please log in to use the app")
