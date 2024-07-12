@@ -16,6 +16,7 @@ def register_user(username, password):
     else:
         data['users'].append({'username': username, 'password': password})
         st.success(f"User '{username}' registered successfully")
+    st.write("Current Users:", data['users'])
 
 # User authentication function
 def authenticate_user(username, password):
@@ -54,6 +55,9 @@ login_username = st.sidebar.text_input("Login Username", key="login_username")
 login_password = st.sidebar.text_input("Login Password", type="password", key="login_password")
 if st.sidebar.button("Login"):
     login_user = authenticate_user(login_username, login_password)
+    st.write(f"Attempting to log in with username: {login_username} and password: {login_password}")
+    st.write(f"Users in data: {data['users']}")
+    st.write(f"Login user found: {login_user}")
     if login_user:
         st.session_state.username = login_username
         st.sidebar.success(f"Logged in as {login_username}")
